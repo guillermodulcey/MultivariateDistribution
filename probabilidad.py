@@ -6,16 +6,18 @@ class Probabilidad():
     def __init__(self):
         pass
 
-    def generarDataSet(self, mu:list, sigma:list, k):
+    def generarDataSet(self, mu:list, sigma:list, k, semilla):
         #k es la cantidad de datos
+        random.seed(semilla)
         datos = []
         numVariables = len(mu)
         ro = random.uniform(0,1)
-        matrizCo = self.generarMatriz(sigma)
+        matrizCov = self.generarMatriz(sigma,ro) 
         for i in range(0,k):
             while True:
                 z, vector = self.generarVector(numVariables)
-                evaluacion = self.pmfBivariate(vector,mu,sigma,ro)
+                #evaluacion = self.pmfBivariate(vector,mu,sigma,ro)
+                evaluacion = self.pmf(vector,mu,matrizCov)
                 if z <= evaluacion:
                     datos.append(vector)
                     break
@@ -35,13 +37,14 @@ class Probabilidad():
         xmu = numpy.array(x) - numpy.array(mu)
         trans_xmu = xmu.transpose()
 
+        #matrixSigma = self.generarMatriz(x,sigma,ro)
         nmatriz = numpy.array(matrixSigma)
 
         pi = math.pow(2*math.pi,(-k/2))
 
         ####Revisar####
         determinante = numpy.linalg.det(nmatriz)
-        det = math.pow(abs(determinante),(-1/2))
+        det = math.pow(determinante,(-1/2))
         ###############
 
         inv = numpy.linalg.inv(nmatriz)
@@ -53,17 +56,16 @@ class Probabilidad():
         e = math.pow(math.e,potencia)
         return pi*det*e
 
-    def generarMatriz(self, sigma:list):
-        random.seed(1)
+    def generarMatriz(self, sigma:list, ro):
         matriz = []
         lFilas = len(sigma)
         for i in range(0,lFilas):
             fila = []
             for j in range(0,lFilas):
-                ####Revisar####
-                p = random.uniform(0,1)
-                ###############
-                fila.append(p*sigma[i]*sigma[j])
+                if i==j:
+                    fila.append(sigma[i]*sigma[j])
+                else:
+                    fila.append(ro*sigma[i]*sigma[j])
             matriz.append(fila)
         return matriz
 
@@ -86,12 +88,15 @@ class Probabilidad():
         return (x[0]-mu[0])*(x[1]-mu[1])/(sigma[0]*sigma[1])
 
 p = Probabilidad()
-DataSet = p.generarDataSet([0.8,0.2],[0.1,0.1],100)
+DataSet = p.generarDataSet([0.9,0.8,0.2],[0.01,0.01,0.01],100,1)
 print(DataSet)
 acumulador1 = 0
 acumulador2 = 0
+acumulador3 = 0
 for i in range(0,len(DataSet)):
     acumulador1 += DataSet[i][0]
     acumulador2 += DataSet[i][1]
+    acumulador3 += DataSet[i][2]
 print(str(acumulador1/len(DataSet)))
 print(str(acumulador2/len(DataSet)))
+print(str(acumulador3/len(DataSet)))
