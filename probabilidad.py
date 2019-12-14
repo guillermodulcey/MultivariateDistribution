@@ -10,11 +10,11 @@ class Probabilidad():
         #k es la cantidad de datos
         datos = []
         numVariables = len(mu)
+        ro = random.uniform(0,1)
         matrizCo = self.generarMatriz(sigma)
         for i in range(0,k):
             while True:
                 z, vector = self.generarVector(numVariables)
-                ro = random.uniform(0,1)
                 evaluacion = self.pmfBivariate(vector,mu,sigma,ro)
                 if z <= evaluacion:
                     datos.append(vector)
@@ -86,7 +86,7 @@ class Probabilidad():
         return (x[0]-mu[0])*(x[1]-mu[1])/(sigma[0]*sigma[1])
 
 p = Probabilidad()
-DataSet = p.generarDataSet([1,2],[7,8],10000)
+DataSet = p.generarDataSet([0.8,0.2],[0.1,0.1],100)
 print(DataSet)
 acumulador1 = 0
 acumulador2 = 0
