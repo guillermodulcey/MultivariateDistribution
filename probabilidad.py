@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Probabilidad():
     def __init__(self):
+        self.matrizCov = []
         pass
 
     def generarDataSet(self, mu:list, sigma:list, k, semilla):
@@ -14,12 +15,12 @@ class Probabilidad():
         datos = []
         numVariables = len(mu)
         ro = self.__generarRo(numVariables)
-        matrizCov = self.generarMatriz(sigma,ro)
-        print(matrizCov) 
+        self.matrizCov = self.generarMatriz(sigma,ro)
+        print(self.matrizCov) 
         for i in range(0,k):
             while True:
                 z, vector = self.generarVector(numVariables)
-                evaluacion = self.pmf(vector,mu,matrizCov)
+                evaluacion = self.pmf(vector,mu,self.matrizCov)
                 if z <= evaluacion:
                     datos.append(vector)
                     break
@@ -40,11 +41,11 @@ class Probabilidad():
 
         nmatriz = numpy.array(matrixSigma)
 
-        pi = math.pow(2*math.pi,(k/2))
+        pi = math.pow(2*math.pi,(-k/2))
 
         ####Revisar####
         determinante = numpy.linalg.det(nmatriz)
-        det = math.pow(determinante,(1/2))
+        det = math.pow(determinante,(-1/2))
         ###############
 
         inv = numpy.linalg.inv(nmatriz)
@@ -54,7 +55,7 @@ class Probabilidad():
         potencia = (-1/2)*prodFinal
         
         e = math.exp(potencia)
-        return (1/(pi*det))*e
+        return pi*det*e
 
     def generarMatriz(self, sigma:list, ro):
         matriz = []
@@ -100,7 +101,7 @@ class Probabilidad():
                 if i==j:
                     ro = 1
                 else:
-                    ro = random.uniform(0,1)
+                    ro = random.uniform(0.1,0.3)
                 roFila.append(ro)
             roMatriz.append(roFila)
 
@@ -121,13 +122,89 @@ class Probabilidad():
     def obtenerColumna(self, matriz, column):
         return numpy.array(matriz)[:,column].tolist()
 
+    def graficar(self, xs, ys, zs, mu):
+        from matplotlib.ticker import LinearLocator
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(xs, ys, zs)
+        #ax.set_zlim([0,1])
+
+        puntosFuncion = self.__generarMatrizFuncion()
+
+        z = []
+
+        x = numpy.arange(0, 1, 0.01)
+        y = numpy.arange(0, 1, 0.01)
+
+        x,y = numpy.meshgrid(x,y)
+        print(x)
+        
+        for i in range(0,len(puntosFuncion)):
+            res = self.pmf(puntosFuncion[i],mu,self.matrizCov)
+            z.append(min(1,res))
+
+        for i in range(0,len(puntosFuncion)):
+            if z[i]>1:
+                print(x[i],y[i],z[i])
+
+        z = numpy.array(z)
+        z = z.reshape((len(x), len(y)))
+        ax.contour3D(x, y, z, 50, cmap='binary')
+
+
+        plt.show()
+    
+    def __generarMatrizFuncion(self):
+        datos = []
+        x = numpy.arange(0, 1, 0.01).tolist()
+        y = numpy.arange(0, 1, 0.01).tolist()
+        for i in x:
+            for j in y:
+                datos.append([i,j])
+        return datos
+
+    def graficarEnsayo(self):
+        from matplotlib.ticker import LinearLocator
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        # Make data.
+        X = numpy.arange(-5, 5, 0.25)
+        xlen = len(X)
+        Y = numpy.arange(-5, 5, 0.25)
+        ylen = len(Y)
+        X, Y = numpy.meshgrid(X, Y)
+        R = numpy.sqrt(X**2 + Y**2)
+        Z = numpy.sin(R)
+
+        # Create an empty array of strings with the same shape as the meshgrid, and
+        # populate it with two colors in a checkerboard pattern.
+        colortuple = ('y', 'b')
+        colors = numpy.empty(X.shape, dtype=str)
+        for y in range(ylen):
+            for x in range(xlen):
+                colors[x, y] = colortuple[(x + y) % len(colortuple)]
+
+        # Plot the surface with face colors taken from the array we made.
+        surf = ax.plot_surface(X, Y, Z, facecolors=colors, linewidth=0)
+
+        # Customize the z axis.
+        ax.set_zlim(-1, 1)
+        ax.w_zaxis.set_major_locator(LinearLocator(6))
+
+        plt.show()
+
 
 p = Probabilidad()
-DataSet = p.generarDataSet([0.5,0.8],[0.1,0.1],1000,2)
-print(DataSet)
-print(p.calcularPromedio(DataSet))
+mu = [0,0]
+DataSet = p.generarDataSet(mu,[0.1,0.1],1000,2)
+#print(DataSet)
+#print(p.calcularPromedio(DataSet))
+
 xs = p.obtenerColumna(DataSet,0)
 ys = p.obtenerColumna(DataSet,1)
+zs = list(map(lambda a: 0, xs))
 
-plt.plot(xs, ys,'ro')
-plt.show()
+p.graficar(xs,ys,zs,mu)
+#p.graficarEnsayo()
