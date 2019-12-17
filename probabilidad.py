@@ -2,21 +2,23 @@ import math
 import numpy
 import random
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 class Probabilidad():
     def __init__(self):
         pass
 
     def generarDataSet(self, mu:list, sigma:list, k, semilla):
-        #k es la cantidad de datos
         random.seed(semilla)
         datos = []
         numVariables = len(mu)
-        ro = random.uniform(0,1)
-        matrizCov = self.generarMatriz(sigma,ro) 
+        ro = self.__generarRo(numVariables)
+        matrizCov = self.generarMatriz(sigma,ro)
+        print(matrizCov) 
         for i in range(0,k):
             while True:
                 z, vector = self.generarVector(numVariables)
-                #evaluacion = self.pmfBivariate(vector,mu,sigma,ro)
                 evaluacion = self.pmf(vector,mu,matrizCov)
                 if z <= evaluacion:
                     datos.append(vector)
@@ -30,31 +32,29 @@ class Probabilidad():
         z = random.uniform(0,1)
         return z, vector
             
-
     def pmf(self, x:list, mu:list, matrixSigma):
         k = len(x)
 
         xmu = numpy.array(x) - numpy.array(mu)
         trans_xmu = xmu.transpose()
 
-        #matrixSigma = self.generarMatriz(x,sigma,ro)
         nmatriz = numpy.array(matrixSigma)
 
-        pi = math.pow(2*math.pi,(-k/2))
+        pi = math.pow(2*math.pi,(k/2))
 
         ####Revisar####
         determinante = numpy.linalg.det(nmatriz)
-        det = math.pow(determinante,(-1/2))
+        det = math.pow(determinante,(1/2))
         ###############
 
         inv = numpy.linalg.inv(nmatriz)
 
-        prodXmuInv = numpy.dot(xmu,inv)
+        prodXmuInv = numpy.dot(trans_xmu,inv)
         prodFinal = numpy.dot(prodXmuInv,xmu)
         potencia = (-1/2)*prodFinal
         
-        e = math.pow(math.e,potencia)
-        return pi*det*e
+        e = math.exp(potencia)
+        return (1/(pi*det))*e
 
     def generarMatriz(self, sigma:list, ro):
         matriz = []
@@ -65,8 +65,13 @@ class Probabilidad():
                 if i==j:
                     fila.append(sigma[i]*sigma[j])
                 else:
-                    fila.append(ro*sigma[i]*sigma[j])
+                    fila.append(ro[i][j]*sigma[i]*sigma[j])
             matriz.append(fila)
+
+        for i in range(0,lFilas):
+            for j in range(0,lFilas):
+                matriz[i][j] = matriz[j][i]
+
         return matriz
 
     #########Bivariate
@@ -87,16 +92,42 @@ class Probabilidad():
     def __productoP(self, x:list, mu:list, sigma:list):
         return (x[0]-mu[0])*(x[1]-mu[1])/(sigma[0]*sigma[1])
 
+    def __generarRo(self, size):
+        roMatriz = []
+        for i in range(0,size):
+            roFila = []
+            for j in range(0,size):
+                if i==j:
+                    ro = 1
+                else:
+                    ro = random.uniform(0,1)
+                roFila.append(ro)
+            roMatriz.append(roFila)
+
+        return roMatriz
+    
+    def calcularPromedio(self, matriz):
+        variables = len(matriz[0])
+        acumulador = []
+        for i in range(0,variables):
+            acumulador.append(0)
+
+        for i in range(0,len(matriz)):
+            for j in range(0,variables):
+                acumulador[j] += matriz[i][j]
+
+        return list(map(lambda a: a/len(matriz),acumulador))
+
+    def obtenerColumna(self, matriz, column):
+        return numpy.array(matriz)[:,column].tolist()
+
+
 p = Probabilidad()
-DataSet = p.generarDataSet([0.9,0.8,0.2],[0.01,0.01,0.01],100,1)
+DataSet = p.generarDataSet([0.5,0.8],[0.1,0.1],1000,2)
 print(DataSet)
-acumulador1 = 0
-acumulador2 = 0
-acumulador3 = 0
-for i in range(0,len(DataSet)):
-    acumulador1 += DataSet[i][0]
-    acumulador2 += DataSet[i][1]
-    acumulador3 += DataSet[i][2]
-print(str(acumulador1/len(DataSet)))
-print(str(acumulador2/len(DataSet)))
-print(str(acumulador3/len(DataSet)))
+print(p.calcularPromedio(DataSet))
+xs = p.obtenerColumna(DataSet,0)
+ys = p.obtenerColumna(DataSet,1)
+
+plt.plot(xs, ys,'ro')
+plt.show()
