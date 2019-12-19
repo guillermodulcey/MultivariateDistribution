@@ -5,7 +5,7 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.interpolate import griddata
+#from scipy.interpolate import griddata
 
 class Probabilidad():
     def __init__(self):
@@ -26,7 +26,8 @@ class Probabilidad():
                     datos.append(vector)
                     break
                 else:
-                    datosR.append(vector)
+                    if len(datosR)<k:
+                        datosR.append(vector)
 
         return datos, datosR
 
@@ -195,10 +196,11 @@ class Probabilidad():
 
 p = Probabilidad()
 
-mu = [0,0]
+mu = [0.5,0.5]
 sigma = [0.1,0.1]
 #combinatoria(n,2) = longitud
-ro = ["B","B","B"]
+#A = alta correlación, B = baja correlación, I = correlación inversa
+ro = ["I"]
 ##############################
 matrizCov = p.generarMatriz(sigma,ro)
 
